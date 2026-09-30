@@ -63,7 +63,7 @@ def date_time(df):
     return df
 
 def handle_missing_vals(df):
-    if df.isnull().sum() > 0:
+    if df.isnull().sum().any():
         df['runtime'] = df['runtime'].fillna(df['runtime'].median())
         
 def standard_num_vals(df):
@@ -80,8 +80,8 @@ def handle_incons(df):
 
     df['vote_average'] = df['vote_average'].clip(0, 10)
 
-    df['budget'] = df['budget'].clip(lower=0, inplace=True)
-    df['revenue'] = df['revenue'].clip(lower=0, inplace=True)
+    df['budget'] = df['budget'].clip(lower=0)
+    df['revenue'] = df['revenue'].clip(lower=0)
     
     return df
 def cols_groupping(df):
@@ -107,6 +107,8 @@ print(standard_num_vals(cleaned))
 print(cols_groupping(cleaned))
 print(handle_incons(cleaned))
 
+
+mycol.delete_many(filter={})
 
 records = cleaned.to_dict(orient='records')
 x = mycol.insert_many(records)
