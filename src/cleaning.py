@@ -48,9 +48,8 @@ def clean_data(df):
         
         df = df.drop_duplicates(subset=['movie_id'])
         
-        df['genres'] = df['genres'].apply(lambda x: ', '.join(x) if x else '')
-        df['keywords'] = df['keywords'].apply(lambda x: ', '.join(x) if x else '')
-        df = df.drop_duplicates()
+        # df['genres'] = df['genres']
+        # df['keywords'] = df['keywords'].apply(lambda x: ', '.join(x) if x else '')
         df = df.reset_index(drop=True)
         
     return df
@@ -58,8 +57,6 @@ def clean_data(df):
 
 def date_time(df):
     df['release_date'] = pd.to_datetime(df['release_date'])
-    df['release_year'] = df['release_date'].dt.year
-    df['release_month'] = df['release_date'].dt.month
     return df
 
 def handle_missing_vals(df):
