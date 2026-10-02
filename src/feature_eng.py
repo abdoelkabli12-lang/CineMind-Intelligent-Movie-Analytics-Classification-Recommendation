@@ -42,7 +42,7 @@ def log_feature(df):
   df['log_popularity'] = np.log1p(df['popularity'])
   return df
 
-def save_features(df):
+def load_features(df):
   date_features(df)
   num_features(df)
   cat_features(df)
@@ -50,5 +50,5 @@ def save_features(df):
   
   return df
 df = load_data()
-save_features(df)
+load_features(df)
 print (df.columns)
