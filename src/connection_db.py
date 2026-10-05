@@ -7,7 +7,7 @@ load_dotenv()
 
 myclient = pymongo.MongoClient(os.getenv("MONGODB_URI"))
 
-mydb = myclient["cin_mind"]
+mydb = myclient["cin-mind"]
 
 mycol = mydb['cleaned_data']
 

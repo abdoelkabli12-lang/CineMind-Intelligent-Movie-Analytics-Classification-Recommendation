@@ -10,12 +10,12 @@ def load_data():
   data_raw = mycol.find({})
   df = pd.DataFrame(data_raw)
   if '_id' in df.columns:
-    df = df.drop(columns='_id')
-  print(f"Loaded {len(df)} movies from MongoDB")
+    df = df.drop(columns='_id') 
   return df
 
 
 def date_features(df):
+    df['release_date'] = pd.to_datetime(df['release_date'])
     df['release_year'] = df['release_date'].dt.year
     df['release_month'] = df['release_date'].dt.month
     df['release_decade'] = (df['release_year'] // 10) * 10
@@ -23,7 +23,6 @@ def date_features(df):
     return df
 
 def num_features(df):
-  while True:
     df['num_genres'] = df['genres'].apply(len)
     df['num_Keywords'] = df['keywords'].apply(len)
     return df
@@ -42,13 +41,18 @@ def log_feature(df):
   df['log_popularity'] = np.log1p(df['popularity'])
   return df
 
+def binary_features(df):
+  thr = df['vote_count'].quantile(0.75)
+  df['high_engagement'] = (df['vote_count'] >= thr).astype(int)
+  return df
+
 def load_features(df):
-  date_features(df)
-  num_features(df)
-  cat_features(df)
-  log_feature(df)
+  df = date_features(df)
+  df = num_features(df)
+  df = cat_features(df)
+  df = log_feature(df)
+  df = binary_features(df)
   
   return df
 df = load_data()
 load_features(df)
-print (df.columns)

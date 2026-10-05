@@ -39,10 +39,16 @@ df_clean = pd.DataFrame({
     'title': clean_text(df['title'])
 })
 def tf_idf(df):
-    vectorizer = TfidfVectorizer(max_df=1, ngram_range=(1,2), stop_words='english', vocabulary=500)
+    vectorizer = TfidfVectorizer(max_df=0.9, ngram_range=(1,2), stop_words='english', max_features=2500)
     tfidf_matrix = vectorizer.fit_transform(df)
-    return tfidf_matrix
+    return vectorizer, tfidf_matrix
+def avg_weights(vector,mat):
+    avg_weights = np.array(mat.mean(axis=0)).ravel()
+    feature_names = vector.get_feature_names_out()
+    result = pd.DataFrame({'term': feature_names, 'avg_tfidf': avg_weights})
+    result =result.sort_values('avg_tfidf', ascending=False)
+    return result
 
-mat = tf_idf(df_clean['overview'].tolist())
-print(mat)
 
+vector, mat = tf_idf(df_clean['overview'].tolist())
+print(avg_weights(vector, mat))
