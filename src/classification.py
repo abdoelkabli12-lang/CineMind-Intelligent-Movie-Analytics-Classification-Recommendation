@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
+from sklearn.model_selection import GridSearchCV
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -21,6 +22,9 @@ from sklearn.metrics import (
 )
 
 from feature_eng import load_data, load_features
+from collections import defaultdict
+import joblib
+from sklearn.base import clone
 
 data = load_data()
 df = load_features(data)
@@ -51,10 +55,6 @@ cat_pipeline = Pipeline(steps=[
     ('encoder', OneHotEncoder(handle_unknown='ignore'))
 ])
 
-print(f"num_cols: {num_cols}")
-print(f"cat_cols: {cat_cols}")
-print(f"X shape: {X.shape}")
-
 preprocessor = ColumnTransformer([
     ('num', num_pipeline, num_cols),
     ('cat', cat_pipeline, cat_cols)
@@ -64,12 +64,50 @@ lr_pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
     ('classifier', LogisticRegression(
         C=1,
-        penalty='l1',
+        penalty='l2',
         solver='liblinear',
         max_iter=500,
         class_weight='balanced'
     ))
 ])
+
+
+# GRIDSEARCHCV FOR LOGISTIC REGRESSION MODEL!!!!!!!!!
+
+# logistic_param_grid = {
+#     "classifier__C": [0.01, 0.1, 1, 10, 100],
+#     "classifier__penalty": ["l1", "l2"],
+#     "classifier__solver": [None, "liblinear"],
+#     "classifier__class_weight": [None, "balanced"],
+#     "classifier__max_iter": [500, 1000]
+# }
+
+# gs_lr = GridSearchCV(
+#     estimator=lr_pipeline,
+#     param_grid=logistic_param_grid,
+#     scoring='roc_auc',
+#     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),
+#     n_jobs=-1,
+#     refit=True,
+#     verbose=1,
+# )
+
+# gs_lr.fit(x_train, y_train)
+
+# print("Best parameters:", gs_lr.best_params_)
+# print("Best cross-validation ROC-AUC:", gs_lr.best_score_)
+
+# best_lr_pipeline = gs_lr.best_estimator_
+
+
+# y_pred = best_lr_pipeline.predict(x_test)
+# y_scores = best_lr_pipeline.predict_proba(x_test)[:, 1]
+
+# print("Accuracy:", accuracy_score(y_test, y_pred))
+# print("Precision:", precision_score(y_test, y_pred))
+# print("Recall:", recall_score(y_test, y_pred))
+# print("F1:", f1_score(y_test, y_pred))
+# print("ROC-AUC:", roc_auc_score(y_test, y_scores))
 
 rf_pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
@@ -135,4 +173,55 @@ print(f"F1: {F1}")
 print(f"Roc_Auc: {ROC_AUC}")
 
 
+models_cv = models
+scoring = {
+    'accuracy': 'accuracy',
+    'precision': 'precision',
+    'recall': 'recall',
+    'f1': 'f1',
+    'roc_auc': 'roc_auc',
+}
+full_models = defaultdict(list)
+strKFold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
+for name, pipe in models_cv.items():
+    cv_scores = cross_validate(pipe, x_train, y_train, cv=strKFold, scoring=scoring)
+
+    print(f"=== {name} ===")
+    full_models['Model'].append(name)
+    for metric in scoring:
+        mean_score = cv_scores[f'test_{metric}'].mean()
+        full_models[f'Mean CV {metric.replace("_", " ").title()}'].append(mean_score)
+        print(f"Mean CV {metric.replace('_', ' ').title()}: {mean_score:.4f}")
+
+comparison = pd.DataFrame(full_models)
+comparison = comparison.set_index('Model')
+
+print('\n')
+
+print('=== Model Comparison — 5-Fold Cross-Validation ===')
+print(comparison.to_string())
+
+best_model_name = comparison['Mean CV Accuracy'].idxmax()
+best_precision = comparison.loc[best_model_name, 'Mean CV Precision']
+best_accuracy = comparison.loc[best_model_name, 'Mean CV Accuracy']
+best_f1 = comparison.loc[best_model_name, 'Mean CV F1']
+
+print(f'\n=== Best Model: {best_model_name} ===')
+print(f'Mean CV Precision: {best_precision:.4f}')
+print(f'Mean CV Accuracy: {best_accuracy:.4f}')
+print(f'Mean CV F1:   {best_f1:.4f}')
+
+best_model = clone(models[best_model_name])
+best_model.fit(X, Y)
+
+model_bundle = {
+    "model": best_model,
+    "model_name": best_model_name,
+    "numeric_features": num_cols,
+    "categorical_features": cat_cols,
+    "target": "high_engagement",
+}
+
+model_path = 'models/best_model.pkl'
+joblib.dump(model_bundle, model_path)
