@@ -5,14 +5,12 @@ import seaborn as sns
 from connection_db import mycol
 
 
-def load_data():
-    data_raw = mycol.find({})
-    df = pd.DataFrame(data_raw)
-    if '_id' in df.columns:
-        df = df.drop(columns=['_id'])
-    print(f"Loaded {len(df)} movies from MongoDB")
-    return df
+from feature_eng import load_data, load_features
 
+pd.set_option('display.max_columns', None)
+
+data = load_data()
+df = load_features(data)
 
 def plot_01_vote_avg(df, sp=None):
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -171,7 +169,7 @@ def plot_09_corr(df, sp=None):
 
 def run_eda(od='notebooks/eda_figs'):
     import os
-    df = load_data()
+    df = load_features(load_data())
     os.makedirs(od, exist_ok=True)
     print("\nGenerating all 9 EDA charts...")
     plot_01_vote_avg(df, f'{od}/01_vote_avg.png'); print("  [1/9] Vote average")

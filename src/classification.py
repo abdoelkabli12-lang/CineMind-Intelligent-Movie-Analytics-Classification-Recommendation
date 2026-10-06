@@ -21,6 +21,8 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 from feature_eng import load_data, load_features
 from collections import defaultdict
 import joblib
@@ -33,12 +35,14 @@ X = df.drop(columns=['vote_count', 'high_engagement'])
 Y = df['high_engagement']
 X['genres'] = X['genres'].apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x))
 X['keywords'] = X['keywords'].apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x))   
+X["overview"] = X["overview"].fillna("")
+
 
 num_cols = X.select_dtypes(include=[np.number]).columns.tolist()
 cat_cols = X.select_dtypes(include='object').columns.tolist()
 
 num_cols = [c for c in num_cols if c != 'movie_id']
-cat_cols = [c for c in cat_cols if c not in ('title', 'overview')]
+cat_cols = [c for c in cat_cols if c not in ('title')]
 
 
 x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, shuffle=True, random_state=42, stratify=Y)
@@ -57,7 +61,8 @@ cat_pipeline = Pipeline(steps=[
 
 preprocessor = ColumnTransformer([
     ('num', num_pipeline, num_cols),
-    ('cat', cat_pipeline, cat_cols)
+    ('cat', cat_pipeline, cat_cols),
+    ("overview_text", TfidfVectorizer(stop_words="english", max_features=3000, ngram_range=(1, 2)), "overview"),
 ])
 
 lr_pipeline = Pipeline(steps=[
@@ -79,7 +84,9 @@ lr_pipeline = Pipeline(steps=[
 #     "classifier__penalty": ["l1", "l2"],
 #     "classifier__solver": [None, "liblinear"],
 #     "classifier__class_weight": [None, "balanced"],
-#     "classifier__max_iter": [500, 1000]
+#     "classifier__max_iter": [500, 1000],
+#     "preprocessor__overview_text__max_features": [2000, 3000, 5000],
+#     "preprocessor__overview_text__ngram_range": [(1, 1), (1, 2)],
 # }
 
 # gs_lr = GridSearchCV(

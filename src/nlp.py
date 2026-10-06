@@ -46,7 +46,7 @@ def avg_weights(vector,mat):
     avg_weights = np.array(mat.mean(axis=0)).ravel()
     feature_names = vector.get_feature_names_out()
     result = pd.DataFrame({'term': feature_names, 'avg_tfidf': avg_weights})
-    result =result.sort_values('avg_tfidf', ascending=False)
+    result = result.sort_values('avg_tfidf', ascending=False)
     return result
 
 
