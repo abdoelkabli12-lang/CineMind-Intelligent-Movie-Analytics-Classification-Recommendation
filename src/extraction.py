@@ -82,61 +82,60 @@ FIELDS_TO_KEEP = {
 }
     
     
-class Extraction:
-  def __init__(self):
-      pass
-  def extract_films(min_id=1, max_id=4000, output_file='data/raw/all_movies.json'):
-      os.makedirs(os.path.dirname(output_file), exist_ok=True)
-      
-      all_movies = []
-      
-      for movie_id in range(min_id, max_id + 1):
-          url = f'{BASE_URL}/movie/{movie_id}'
-          params = {
-              'api_key': API_KEY,
-              'language': 'en-US',
-              'append_to_response': 'keywords,genres'
-          }
-          
-          try:
-              response = requests.get(url, params=params, timeout=10)
-              
-              if response.status_code == 404:
-                  continue
-              
-              response.raise_for_status()
-              full_data = response.json()
 
-              filtered = {}
-              for tmdb_field, your_field in FIELDS_TO_KEEP.items():
-                  filtered[your_field] = full_data.get(tmdb_field)
-              
-              all_movies.append(filtered)
-          
-          except requests.exceptions.HTTPError as e:
-              if response.status_code == 429:
-                  time.sleep(5)
-                  continue
-          except Exception:
-              pass
-          
-          time.sleep(0.25)
+def extract_films(min_id=1, max_id=4000, output_file='data/raw/all_movies.json'):
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    
+    all_movies = []
+    
+    for movie_id in range(min_id, max_id + 1):
+        url = f'{BASE_URL}/movie/{movie_id}'
+        params = {
+            'api_key': API_KEY,
+            'language': 'en-US',
+            'append_to_response': 'keywords,genres'
+        }
+        
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 404:
+                continue
+            
+            response.raise_for_status()
+            full_data = response.json()
 
-          if movie_id % 50 == 0:
-              print(f"  Progress: {movie_id}/{max_id} ({len(all_movies)} movies fetched)")
-      
-      output = {
-          'metadata': {
-              'total_fetched': len(all_movies),
-              'range': {'min_id': min_id, 'max_id': max_id},
-              'fields': list(FIELDS_TO_KEEP.values())
-          },
-          'movies': all_movies
-      }
-      
-      with open(output_file, 'w', encoding='utf-8') as f:
-          json.dump(output, f, ensure_ascii=False, indent=2)
-      
-      print(f"\nDone! {len(all_movies)} movies saved to {output_file}")
+            filtered = {}
+            for tmdb_field, your_field in FIELDS_TO_KEEP.items():
+                filtered[your_field] = full_data.get(tmdb_field)
+            
+            all_movies.append(filtered)
+        
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 429:
+                time.sleep(0.2)
+                continue
+        except Exception:
+            pass
+        
+        time.sleep(0.02)
 
-  extract_films(min_id=1)
+        if movie_id % 50 == 0:
+            print(f"  Progress: {movie_id}/{max_id} ({len(all_movies)} movies fetched)")
+    
+    output = {
+        'metadata': {
+            'total_fetched': len(all_movies),
+            'range': {'min_id': min_id, 'max_id': max_id},
+            'fields': list(FIELDS_TO_KEEP.values())
+        },
+        'movies': all_movies
+    }
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+    
+    print(f"\nDone! {len(all_movies)} movies saved to {output_file}")
+
+if __name__ == '__main__':
+    extract_films(min_id=1)

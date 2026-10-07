@@ -1,13 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
-from connection_db import mycol
-
-
-with open('data/raw/all_movies.json', 'r', encoding='utf-8') as f:
-    raw_data = json.load(f)
-
-data = pd.DataFrame(raw_data['movies'])
+import os
 
 
 def health_check(df):
@@ -85,20 +79,20 @@ def cols_groupping(df):
     return cols_groups
 
 
-# --- Pipeline ---
-health_check(data)
-cleaned = clean_data(data)
-cleaned = date_time(cleaned)
-cleaned = handle_missing_vals(cleaned)
-cleaned = standard_num_vals(cleaned)
-cleaned = handle_incons(cleaned)
+def clean_file(input_file, output_file):
+    with open(input_file, 'r', encoding='utf-8') as f:
+        raw_data = json.load(f)
 
-print(f"\nAfter cleaning: {cleaned.shape[0]} rows, {cleaned.shape[1]} cols")
-print(cleaned.head())
-print(cols_groupping(cleaned))
+    data = pd.DataFrame(raw_data['movies'])
+    health_check(data)
+    cleaned = clean_data(data)
+    cleaned = date_time(cleaned)
+    cleaned = handle_missing_vals(cleaned)
+    cleaned = standard_num_vals(cleaned)
+    cleaned = handle_incons(cleaned)
 
-# Write to MongoDB
-mycol.delete_many(filter={})
-records = cleaned.to_dict(orient='records')
-mycol.insert_many(records)
-print(f"Inserted {len(records)} documents into MongoDB")   
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    cleaned.to_csv(output_file, index=False)
+    print(f"\nAfter cleaning: {cleaned.shape[0]} rows, {cleaned.shape[1]} cols")
+    print(cols_groupping(cleaned))
+    return cleaned

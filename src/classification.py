@@ -27,6 +27,7 @@ from feature_eng import load_data, load_features
 from collections import defaultdict
 import joblib
 from sklearn.base import clone
+from pathlib import Path
 
 data = load_data()
 df = load_features(data)
@@ -228,5 +229,6 @@ model_bundle = {
     "target": "high_engagement",
 }
 
-model_path = 'models/best_model.pkl'
+model_path = Path(__file__).resolve().parents[1] / 'models' / 'airflow' / 'best_model.pkl'
+model_path.parent.mkdir(parents=True, exist_ok=True)
 joblib.dump(model_bundle, model_path)

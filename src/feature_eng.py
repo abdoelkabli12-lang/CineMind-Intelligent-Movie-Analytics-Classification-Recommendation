@@ -54,5 +54,3 @@ def load_features(df):
   df = binary_features(df)
   
   return df
-df = load_data()
-load_features(df)
