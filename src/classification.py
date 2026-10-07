@@ -79,42 +79,40 @@ lr_pipeline = Pipeline(steps=[
 
 # GRIDSEARCHCV FOR LOGISTIC REGRESSION MODEL!!!!!!!!!
 
-# logistic_param_grid = {
-#     "classifier__C": [0.01, 0.1, 1, 10, 100],
-#     "classifier__penalty": ["l1", "l2"],
-#     "classifier__solver": [None, "liblinear"],
-#     "classifier__class_weight": [None, "balanced"],
-#     "classifier__max_iter": [500, 1000],
-#     "preprocessor__overview_text__max_features": [2000, 3000, 5000],
-#     "preprocessor__overview_text__ngram_range": [(1, 1), (1, 2)],
-# }
+logistic_param_grid = {
+    "classifier__C": [0.1, 1, 10],
+    "classifier__solver": ["liblinear"],
+    "classifier__class_weight": [None, "balanced"],
+    "preprocessor__overview_text__max_features": [2000, 3000],
+    "preprocessor__overview_text__ngram_range": [(1, 1), (1, 2)],
+}
 
-# gs_lr = GridSearchCV(
-#     estimator=lr_pipeline,
-#     param_grid=logistic_param_grid,
-#     scoring='roc_auc',
-#     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),
-#     n_jobs=-1,
-#     refit=True,
-#     verbose=1,
-# )
+gs_lr = GridSearchCV(
+    estimator=lr_pipeline,
+    param_grid=logistic_param_grid,
+    scoring='roc_auc',
+    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),
+    n_jobs=-1,
+    refit=True,
+    verbose=1,
+)
 
-# gs_lr.fit(x_train, y_train)
+gs_lr.fit(x_train, y_train)
 
-# print("Best parameters:", gs_lr.best_params_)
-# print("Best cross-validation ROC-AUC:", gs_lr.best_score_)
+print("Best parameters:", gs_lr.best_params_)
+print("Best cross-validation ROC-AUC:", gs_lr.best_score_)
 
-# best_lr_pipeline = gs_lr.best_estimator_
+best_lr_pipeline = gs_lr.best_estimator_
 
 
-# y_pred = best_lr_pipeline.predict(x_test)
-# y_scores = best_lr_pipeline.predict_proba(x_test)[:, 1]
+y_pred = best_lr_pipeline.predict(x_test)
+y_scores = best_lr_pipeline.predict_proba(x_test)[:, 1]
 
-# print("Accuracy:", accuracy_score(y_test, y_pred))
-# print("Precision:", precision_score(y_test, y_pred))
-# print("Recall:", recall_score(y_test, y_pred))
-# print("F1:", f1_score(y_test, y_pred))
-# print("ROC-AUC:", roc_auc_score(y_test, y_scores))
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Precision:", precision_score(y_test, y_pred))
+print("Recall:", recall_score(y_test, y_pred))
+print("F1:", f1_score(y_test, y_pred))
+print("ROC-AUC:", roc_auc_score(y_test, y_scores))
 
 rf_pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
@@ -209,7 +207,7 @@ print('\n')
 print('=== Model Comparison — 5-Fold Cross-Validation ===')
 print(comparison.to_string())
 
-best_model_name = comparison['Mean CV Accuracy'].idxmax()
+best_model_name = comparison['Mean CV Roc Auc'].idxmax()
 best_precision = comparison.loc[best_model_name, 'Mean CV Precision']
 best_accuracy = comparison.loc[best_model_name, 'Mean CV Accuracy']
 best_f1 = comparison.loc[best_model_name, 'Mean CV F1']

@@ -1,12 +1,52 @@
 services:
+  # MongoDB. Replaces the hardcoded localhost in src/connection_db.py, which
+  # cannot work from inside a container. Data is persisted to a named volume.
+  mongo:
+    image: mongo:7
+    container_name: cinemind-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-abdo2007123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-cin-mind}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Streamlit dashboard + the src/ modules.
   app:
     build: .
+    container_name: cinemind-app
+    restart: unless-stopped
     ports:
-      - "8501:8501"
+      # Host port is 8502 because 8501 is already taken by the Ames housing
+      # app (names-housing-ml-app-1). Override with APP_PORT=... if needed.
+      - "${APP_PORT:-8502}:8501"
     volumes:
+      # Code is mounted for live reload while developing. Remove these three
+      # lines to test the image exactly as it is built.
+      - ./src:/app/src
       - ./dashboard:/app/dashboard
       - ./models:/app/models
     environment:
-      - STREAMLIT_SERVER_PORT=8501
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
-    restart: unless-stopped
+      STREAMLIT_SERVER_PORT: 8501
+      STREAMLIT_SERVER_ADDRESS: 0.0.0.0
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+      # Service name, not localhost: inside the app container "localhost" is
+      # the app itself, not the database.
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-cin-mind}
+      TMDB_API_KEY: ${TMDB_API_KEY}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo_data:

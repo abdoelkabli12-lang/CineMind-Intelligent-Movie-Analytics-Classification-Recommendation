@@ -14,9 +14,6 @@ from feature_eng import load_data, load_features
 
 pd.set_option('display.max_columns', None)
 
-data = load_data()
-df = load_features(data)
-
 
 def clean_text(values):
     res = []
@@ -34,14 +31,11 @@ def clean_text(values):
     return res
 
 
-df_clean = pd.DataFrame({
-    'overview': clean_text(df['overview']),
-    'title': clean_text(df['title'])
-})
 def tf_idf(df):
     vectorizer = TfidfVectorizer(max_df=0.9, ngram_range=(1,2), stop_words='english', max_features=2500)
     tfidf_matrix = vectorizer.fit_transform(df)
     return vectorizer, tfidf_matrix
+
 def avg_weights(vector,mat):
     avg_weights = np.array(mat.mean(axis=0)).ravel()
     feature_names = vector.get_feature_names_out()
@@ -50,5 +44,26 @@ def avg_weights(vector,mat):
     return result
 
 
-vector, mat = tf_idf(df_clean['overview'].tolist())
-print(avg_weights(vector, mat))
+
+
+if __name__ == "__main__":
+    data = load_data()
+    df = load_features(data)
+    df_clean = pd.DataFrame({
+    'title': clean_text(df['title']),
+    'overview': clean_text(df['overview'])
+})
+    
+    valid_overviews = df_clean["overview"].str.strip().ne("")
+    movies_for_search = df.loc[valid_overviews].copy()
+    overviews_for_search = df_clean.loc[valid_overviews, "overview"].tolist()
+
+    print(f"Excluded empty overviews: {(~valid_overviews).sum()}")
+
+    vectorizer, tfidf_matrix = tf_idf(overviews_for_search)
+
+    print(avg_weights(vectorizer, tfidf_matrix))
+
+    joblib.dump(vectorizer, "models/tfidf_vectorizer.pkl")
+    save_npz("models/movie_tfidf_matrix.npz", tfidf_matrix)
+    joblib.dump(movies_for_search, "models/movies_for_search.pkl")
