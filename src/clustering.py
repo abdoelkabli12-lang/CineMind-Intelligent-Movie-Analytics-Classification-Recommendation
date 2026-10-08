@@ -37,11 +37,9 @@ preprocessor = ColumnTransformer([
   ("num", num_pipeline, num_cols),
   ("overview", TfidfVectorizer(
     stop_words="english",
-    max_features=2500,
-    ngram_range=(1, 2)
-  ), "overview"),
-  ("genres", TfidfVectorizer(), "genres"),
-  ("keywords", TfidfVectorizer(max_features=1000), "keywords")
+    max_features=1000,
+    ngram_range=(2, 3)
+  ), "overview")
 ])
 
 
