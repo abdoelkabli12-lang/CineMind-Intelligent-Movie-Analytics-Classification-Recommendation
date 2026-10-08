@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131a">
+  <title>CineMind · Project Knowledge Check</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10131a;
+      --surface: #191e28;
+      --surface-raised: #202735;
+      --line: #303949;
+      --text: #f3f1ea;
+      --muted: #a7afbc;
+      --lime: #c8f169;
+      --blue: #85adff;
+      --red: #ff8d83;
+      --green: #9be2aa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 88% -8%, #354450 0, transparent 36%),
+        radial-gradient(ellipse at 5% 28%, #24253a 0, transparent 32%),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 42px 0 20px; }
+    .eyebrow, .meta, .label {
+      color: var(--lime);
+      font: 700 .72rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.15; letter-spacing: -.035em; }
+    h1 { font-size: clamp(2.1rem, 5vw, 3.7rem); margin: 12px 0; }
+    h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 8px; }
+    h3 { font-size: 1.2rem; margin: 0; }
+    .lede { color: var(--muted); max-width: 720px; font-size: 1.04rem; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .badge {
+      border: 1px solid #47543c; color: var(--lime); background: #1a2419;
+      padding: 7px 11px; border-radius: 999px; white-space: nowrap;
+      font: 600 .72rem ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .notice {
+      margin: 20px 0 25px; padding: 14px 17px; border: 1px solid var(--line);
+      border-radius: 13px; background: #151a22; color: var(--muted);
+    }
+    .notice strong { color: var(--text); }
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; margin: 18px 0; position: sticky; top: 0; z-index: 5;
+      padding: 12px 0; background: rgb(16 19 26 / 94%); backdrop-filter: blur(12px);
+    }
+    .progress-wrap { flex: 1; min-width: 150px; }
+    .progress-caption { display: flex; justify-content: space-between; color: var(--muted); font-size: .8rem; margin-bottom: 7px; }
+    progress { display: block; width: 100%; height: 7px; border: 0; border-radius: 10px; overflow: hidden; }
+    progress::-webkit-progress-bar { background: var(--line); }
+    progress::-webkit-progress-value { background: var(--lime); }
+    progress::-moz-progress-bar { background: var(--lime); }
+    .question {
+      background: linear-gradient(140deg, rgb(27 33 44 / 96%), rgb(22 27 36 / 96%));
+      border: 1px solid var(--line); border-radius: 17px; padding: 21px;
+      margin: 15px 0; scroll-margin-top: 90px;
+    }
+    .qhead { display: flex; gap: 12px; align-items: flex-start; }
+    .qnumber {
+      display: grid; place-items: center; flex: 0 0 35px; height: 35px;
+      border: 1px solid #485442; border-radius: 10px; color: var(--lime);
+      font: 700 .76rem ui-monospace, monospace;
+    }
+    .qmain { flex: 1; }
+    .question-text { margin: 2px 0 8px; font-weight: 650; font-size: 1.02rem; }
+    .concept { color: var(--muted); font-size: .83rem; }
+    .tags { display: flex; gap: 7px; flex-wrap: wrap; margin: 10px 0 13px; }
+    .tag {
+      border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px;
+      color: var(--muted); font: 600 .68rem ui-monospace, monospace;
+    }
+    .tag.multi { color: var(--blue); border-color: #35496a; }
+    .choice {
+      display: flex; align-items: flex-start; gap: 11px; padding: 11px 12px;
+      border: 1px solid transparent; border-radius: 11px; cursor: pointer;
+      color: #e4e6eb; transition: background .15s, border-color .15s;
+    }
+    .choice:hover { background: #252e3d; border-color: #3b4758; }
+    .choice input { margin-top: 4px; accent-color: var(--lime); flex: 0 0 auto; }
+    .choice.correct { background: #1b2c23; border-color: #3d7250; }
+    .choice.incorrect { background: #321f24; border-color: #784149; }
+    .choice-text { flex: 1; }
+    .feedback { display: none; margin: 13px 0 0 47px; padding: 11px 13px; border-radius: 10px; }
+    .feedback.show { display: block; }
+    .feedback.good { background: #1b2c23; color: var(--green); }
+    .feedback.bad { background: #321f24; color: #ffaaa2; }
+    .feedback p { margin: 4px 0 0; color: #d6d9df; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0; }
+    .btn {
+      border: 1px solid var(--line); border-radius: 11px; padding: 11px 16px;
+      color: var(--text); background: var(--surface-raised); cursor: pointer; font-weight: 700;
+    }
+    .btn:hover { filter: brightness(1.12); }
+    .btn.primary { background: var(--lime); border-color: var(--lime); color: #151a10; }
+    .btn:disabled { cursor: not-allowed; opacity: .55; }
+    .status { min-height: 24px; color: var(--muted); }
+    .result {
+      display: none; border: 1px solid #526044; border-radius: 18px;
+      background: linear-gradient(130deg, #202c20, #19221e); padding: 22px; margin: 23px 0;
+    }
+    .result.show { display: block; }
+    .score-line { display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .score { color: var(--lime); font: 700 clamp(2rem, 5vw, 3.2rem) ui-monospace, monospace; }
+    .result p { color: #d2d8cc; }
+    .scenario {
+      margin: 36px 0 50px; border: 1px solid #4c4b39; border-radius: 18px;
+      padding: 24px; background: linear-gradient(145deg, #24251f, #1a1e23);
+    }
+    .scenario .eyebrow { color: #f3d47a; }
+    .scenario-prompt { color: #e4e3dc; }
+    textarea {
+      display: block; width: 100%; min-height: 150px; resize: vertical;
+      padding: 14px; border-radius: 12px; border: 1px solid var(--line);
+      background: #11161d; color: var(--text); margin: 15px 0;
+    }
+    textarea:focus, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--lime); outline-offset: 2px;
+    }
+    details { margin-top: 15px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; background: #171c23; }
+    summary { cursor: pointer; font-weight: 700; }
+    details li { margin: 8px 0; color: #d2d7df; }
+    .scenario-result { display: none; margin-top: 12px; color: var(--green); }
+    .scenario-result.show { display: block; }
+    footer { padding: 10px 0 40px; color: var(--muted); font-size: .82rem; }
+    @media (max-width: 560px) {
+      header { padding-top: 26px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .question { padding: 16px 13px; }
+      .feedback { margin-left: 0; }
+      .badge { font-size: .62rem; }
+    }
+    @media print {
+      body { background: white; color: black; }
+      .toolbar, .actions, .scenario textarea, .scenario button { display: none; }
+      .question, .scenario { break-inside: avoid; background: white; color: black; border-color: #aaa; }
+      .choice, .concept, .lede { color: #222; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="topline">
+        <div class="eyebrow">CineMind · Project knowledge check</div>
+        <div class="badge">30 QUESTIONS + 1 DESIGN SCENARIO</div>
+      </div>
+      <h1>Movie intelligence, from raw data to useful insight.</h1>
+      <p class="lede">A project-based quiz on the concepts behind your movie analytics and recommendation system. Streamlit and Airflow are intentionally excluded.</p>
+      <div class="notice"><strong>How to play:</strong> Choose one answer unless a question says “Select all that apply.” Multi-select questions are scored all-or-nothing. Submit to see your score, correct answers, and explanations. The design scenario at the end is a separate self-assessment.</div>
+    </header>
+
+    <div class="toolbar" aria-label="Quiz progress">
+      <div class="progress-wrap">
+        <div class="progress-caption"><span id="progress-label">0 of 30 answered</span><span id="progress-percent">0%</span></div>
+        <progress id="progress" max="30" value="0">0%</progress>
+      </div>
+      <span class="badge" id="quiz-state">NOT SUBMITTED</span>
+    </div>
+
+    <main>
+      <form id="quiz-form" novalidate>
+        <div id="questions"></div>
+        <div class="actions">
+          <button class="btn primary" id="submit" type="submit">Submit answers</button>
+          <button class="btn" id="reset" type="button">Start over</button>
+          <span class="status" id="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <section class="result" id="result" aria-live="polite">
+        <div class="score-line">
+          <div>
+            <div class="eyebrow">Your result</div>
+            <h2 id="result-title">Quiz complete</h2>
+          </div>
+          <div class="score" id="score">0 / 30</div>
+        </div>
+        <p id="result-copy"></p>
+        <p id="result-detail"></p>
+      </section>
+
+      <section class="scenario" id="scenario">
+        <div class="eyebrow">Final challenge · not included in the 30-question score</div>
+        <h2>Design a reliable movie-intelligence pipeline</h2>
+        <p class="scenario-prompt">
+          A team gives you a TMDB API key and asks for a pipeline that fetches movies,
+          cleans and stores them, trains a high-engagement classifier, creates
+          content-based recommendations, and groups similar movies. It must handle
+          missing records, API limits, unseen categories, and repeat runs without
+          silently corrupting the catalog.
+        </p>
+        <p class="scenario-prompt"><strong>In your own words, outline the stages in order.</strong> Include how you would validate the model, keep preprocessing consistent, persist reusable artifacts, and check whether the pipeline produced trustworthy output.</p>
+        <label class="label" for="scenario-answer">Your pipeline design</label>
+        <textarea id="scenario-answer" placeholder="1. Extract…&#10;2. Validate and clean…&#10;3. Store…&#10;4. Engineer features and split…&#10;5. Train and evaluate…&#10;6. Save and verify…"></textarea>
+        <div class="actions">
+          <button class="btn primary" id="scenario-check" type="button">Check my coverage</button>
+          <span class="status" id="scenario-status" role="status" aria-live="polite"></span>
+        </div>
+        <div class="scenario-result" id="scenario-result">
+          Self-check opened. Compare your answer with the checklist below; this is an architecture exercise, so there is no single exact wording.
+        </div>
+        <details id="scenario-rubric">
+          <summary>Reveal the scenario review checklist</summary>
+          <ol>
+            <li>Keep the API key in environment configuration, not source code; set timeouts, handle 404s, and retry or back off on rate limits such as HTTP 429.</li>
+            <li>Validate response shape and required fields, normalize JSON into tabular rows, deduplicate by stable movie ID, parse dates, and handle missing or implausible values deliberately.</li>
+            <li>Persist cleaned records in MongoDB with a clear idempotent upsert/replacement strategy; verify counts and representative documents after writing.</li>
+            <li>Define the engagement target precisely. Derive any threshold from training data only, then make a stratified train/test split to protect class proportions and reduce leakage.</li>
+            <li>Put numeric imputation/scaling and categorical imputation/one-hot encoding inside a ColumnTransformer and model Pipeline; allow unseen categories at inference time.</li>
+            <li>Use cross-validation and an appropriate search strategy for model selection; report multiple metrics (for example precision, recall, F1, ROC-AUC, and a confusion matrix) rather than accuracy alone.</li>
+            <li>Fit TF-IDF on movie text, retain the row-to-movie mapping, use cosine similarity for ranked recommendations, and test empty/unmatched queries.</li>
+            <li>Scale numeric fields and combine them thoughtfully with text vectors before K-means; choose/evaluate cluster counts with a measure such as silhouette score and inspect cluster profiles.</li>
+            <li>Persist the fitted model, preprocessing pipeline, vectorizer, sparse matrix, and metadata with clear paths/versions. Reload each artifact and test a real prediction/query.</li>
+            <li>Make reruns observable and safe: log counts and errors, avoid broad silent exception handling, verify output files/collections, and compare expected row counts or schema.</li>
+          </ol>
+        </details>
+      </section>
+    </main>
+    <footer>Answer key appears after submission. This page works offline and does not send your answers anywhere.</footer>
+  </div>
+
+  <script>
+    "use strict";
+    const questions = [
+      {
+        level: "Easy", concept: "TMDB API · resource IDs", multi: false,
+        prompt: "The extractor requests <code>/movie/{id}</code> for a range of IDs. What does a 404 response for one ID normally mean in this loop?",
+        choices: ["That ID has no movie resource, so it can be skipped while the loop continues.", "The API key is definitely valid and every later ID will exist.", "The movie should be added as an empty row.", "The loop should stop permanently because all higher IDs are invalid."],
+        answer: [0],
+        explanation: "A 404 is a not-found response for that particular resource. It is reasonable to skip that ID and continue; it does not imply that the full sequence ends there."
+      },
+      {
+        level: "Easy", concept: "Secrets · environment variables", multi: false,
+        prompt: "Where should the TMDB API key be configured for local development?",
+        choices: ["Hard-coded into every request URL in the Python file.", "In a local environment file or environment variable that is excluded from version control.", "Inside the saved TF-IDF matrix.", "As a public default in README.md."],
+        answer: [1],
+        explanation: "Environment configuration separates secrets from source code. Keep the real .env out of Git and never publish the key."
+      },
+      {
+        level: "Medium", concept: "HTTP · timeouts and status checks", multi: true,
+        prompt: "Which request-handling choices make a data extractor more reliable? <em>Select all that apply.</em>",
+        choices: ["Set a finite timeout so a request cannot hang forever.", "Check unsuccessful HTTP statuses rather than treating every response as valid JSON.", "Silently catch every exception and report a successful extraction.", "Validate that the returned payload has the fields/shape the pipeline expects."],
+        answer: [0, 1, 3],
+        explanation: "A timeout, explicit HTTP error checks, and schema validation expose failures early. Catch-all suppression can turn a failed extraction into misleading empty output."
+      },
+      {
+        level: "Medium", concept: "HTTP · rate limiting", multi: false,
+        prompt: "TMDB returns HTTP 429. What is the most appropriate general response?",
+        choices: ["Immediately send requests faster to finish before the limit tightens.", "Retry with a delay/backoff, respecting a server-provided retry hint when available.", "Treat the response body as a valid movie.", "Convert the status code into a movie rating."],
+        answer: [1],
+        explanation: "429 indicates rate limiting. Backoff reduces pressure and makes a retry more likely to succeed."
+      },
+      {
+        level: "Easy", concept: "Pandas · DataFrame", multi: false,
+        prompt: "Why turn a collection of movie records into a pandas DataFrame?",
+        choices: ["It provides a row-and-column structure for cleaning, feature engineering, filtering, and modeling.", "It automatically validates every TMDB credential.", "It stores the original HTTP connection.", "It trains a classifier without labels."],
+        answer: [0],
+        explanation: "A DataFrame is a convenient tabular representation for the project's data preparation and machine-learning steps."
+      },
+      {
+        level: "Medium", concept: "Data cleaning · nested categories", multi: false,
+        prompt: "A genre arrives as <code>[{'id': 18, 'name': 'Drama'}]</code>. Why normalize it to a simple list of names?",
+        choices: ["It makes genre values easier to inspect and consistently encode as text/categories.", "It preserves more nested API metadata.", "It guarantees the genre is statistically significant.", "It removes the need to handle missing values."],
+        answer: [0],
+        explanation: "Flattening nested values produces a consistent representation such as ['Drama'], which simplifies counts, display, and model preprocessing."
+      },
+      {
+        level: "Easy", concept: "Data quality · deduplication", multi: false,
+        prompt: "Which key is the safest deduplication key for movie records from this API?",
+        choices: ["The row position in the current DataFrame.", "The movie title, because titles are always unique.", "The stable TMDB movie ID.", "The popularity score."],
+        answer: [2],
+        explanation: "A stable identifier is more reliable than a title, which can be shared or vary in spelling and localization."
+      },
+      {
+        level: "Medium", concept: "Dates · parsing and calendar features", multi: false,
+        prompt: "Why parse <code>release_date</code> as a datetime before deriving year or decade features?",
+        choices: ["Datetime values support valid calendar operations, so year/month/decade can be derived consistently.", "Parsing fills all missing financial data.", "It changes the target label to a date.", "It automatically removes duplicate titles."],
+        answer: [0],
+        explanation: "Parse dates once into a date-aware type, then derive consistent calendar values such as year, month, or decade."
+      },
+      {
+        level: "Medium", concept: "Missing data · median imputation", multi: false,
+        prompt: "Why might the cleaner fill missing runtime values with the median instead of dropping every incomplete movie?",
+        choices: ["The median can preserve rows while being less sensitive to extreme values than the mean.", "The median proves the missing values were zero.", "Dropping rows is always statistically invalid.", "The median converts the runtime into a category."],
+        answer: [0],
+        explanation: "Median imputation is robust to skew/outliers and avoids discarding all rows with a missing runtime. The imputation policy should still be evaluated."
+      },
+      {
+        level: "Medium", concept: "Data quality · validation rules", multi: true,
+        prompt: "Which are examples of explicit plausibility checks used or motivated by the cleaning code? <em>Select all that apply.</em>",
+        choices: ["Remove movies with nonpositive or implausibly long runtimes.", "Keep vote averages within the expected 0–10 range.", "Clip negative budgets and revenues to zero.", "Replace every missing title with the classifier's predicted label."],
+        answer: [0, 1, 2],
+        explanation: "These rules encode domain ranges. They should be deliberate and documented because clipping or dropping data changes the dataset."
+      },
+      {
+        level: "Easy", concept: "MongoDB · documents and collections", multi: false,
+        prompt: "In this project, what does the <code>cleaned_data</code> MongoDB collection represent?",
+        choices: ["A group of movie documents stored under the CineMind database.", "A single row in a CSV file.", "A fitted TF-IDF vocabulary.", "A Docker network."],
+        answer: [0],
+        explanation: "MongoDB groups JSON-like documents into collections; each cleaned movie is stored as a document."
+      },
+      {
+        level: "Medium", concept: "MongoDB · aggregation", multi: false,
+        prompt: "A pipeline groups movies by <code>original_language</code> and sums one per movie. What does that result compute?",
+        choices: ["A count of movies per language.", "The average rating per language.", "A list of unique movie titles in source order.", "A model's accuracy by language."],
+        answer: [0],
+        explanation: "Grouping on language and summing a constant 1 produces a count for each language group."
+      },
+      {
+        level: "Medium", concept: "Feature engineering · log1p", multi: false,
+        prompt: "Why can <code>log1p(popularity)</code> be useful when popularity is highly right-skewed and may contain zero?",
+        choices: ["It compresses large values and is defined at zero because it computes log(1 + x).", "It maps every movie to the same popularity.", "It removes all outliers without changing ranks.", "It converts popularity into a text vector."],
+        answer: [0],
+        explanation: "The logarithm reduces scale differences in a long-tailed variable; adding one allows zero as input."
+      },
+      {
+        level: "Medium", concept: "Classification · defining a target", multi: false,
+        prompt: "The project defines <code>high_engagement</code> using the 75th percentile of <code>vote_count</code>. What does that target mean?",
+        choices: ["A binary label for movies at or above a vote-count threshold derived from the distribution.", "A probability that is directly returned by TMDB.", "A cluster number learned by K-means.", "A guarantee that a movie has a 7.5 rating."],
+        answer: [0],
+        explanation: "The threshold turns vote_count into a binary supervised-learning target. It is about vote volume, not average score."
+      },
+      {
+        level: "Medium", concept: "Evaluation · stratified split", multi: false,
+        prompt: "Why use a stratified train/test split for a binary engagement target?",
+        choices: ["It approximately preserves each class's proportion in both partitions.", "It guarantees identical feature values in both partitions.", "It prevents any model from overfitting.", "It balances each numeric feature to have mean zero."],
+        answer: [0],
+        explanation: "Stratification maintains class representation, which is especially useful when high-engagement labels are less common."
+      },
+      {
+        level: "Hard", concept: "Preprocessing · ColumnTransformer/Pipeline", multi: false,
+        prompt: "Why put preprocessing and a classifier together in a scikit-learn Pipeline/ColumnTransformer?",
+        choices: ["Different column types can receive suitable transforms, and fitting transforms inside CV prevents validation-fold information leaking into training.", "It makes all model features identical.", "It eliminates the need to split data.", "It converts MongoDB documents into HTTP responses."],
+        answer: [0],
+        explanation: "A column transformer handles heterogeneous numeric, categorical, and text columns; a pipeline ensures each CV training fold fits its transforms without using its validation fold."
+      },
+      {
+        level: "Medium", concept: "Preprocessing · scaling", multi: false,
+        prompt: "Why scale numeric fields before models such as logistic regression or a distance-based clustering algorithm?",
+        choices: ["Otherwise large-unit fields can dominate optimization or distance calculations.", "Scaling makes every feature normally distributed.", "Scaling removes the need to handle categories.", "It ensures all predictions are positive."],
+        answer: [0],
+        explanation: "A large-magnitude feature can dominate a model's optimization or geometric distance. Scaling puts numeric inputs on comparable ranges."
+      },
+      {
+        level: "Medium", concept: "Categorical encoding · unseen values", multi: false,
+        prompt: "Why configure one-hot encoding to ignore unknown categories at inference time?",
+        choices: ["A new category can be represented without failing because it was absent during training.", "All new categories are automatically learned as new model parameters.", "Unknown values are converted to the target label.", "It guarantees the category has no effect on predictions."],
+        answer: [0],
+        explanation: "Ignoring unseen values avoids a transform-time error; it does not teach the model a new category's effect."
+      },
+      {
+        level: "Medium", concept: "NLP · TF-IDF", multi: false,
+        prompt: "What is the main intuition behind TF-IDF for movie overviews?",
+        choices: ["Give weight to terms useful in a document while down-weighting terms common across many documents.", "Count only the total characters in a movie title.", "Translate each plot to a different language.", "Assign every word an identical weight."],
+        answer: [0],
+        explanation: "TF-IDF combines within-document term frequency and inverse document frequency so broadly common words carry less distinguishing weight."
+      },
+      {
+        level: "Medium", concept: "NLP · n-grams and stop words", multi: true,
+        prompt: "Which statements about the project's TF-IDF settings are correct? <em>Select all that apply.</em>",
+        choices: ["Bigrams can represent adjacent two-word phrases as features.", "Removing stop words can reduce weight from very common function words.", "A maximum feature count can limit vocabulary size.", "N-grams make the model understand plot causality automatically."],
+        answer: [0, 1, 2],
+        explanation: "N-grams capture local word sequences, stop-word filtering removes common terms, and a feature cap controls vocabulary size; none of these alone gives causal understanding."
+      },
+      {
+        level: "Medium", concept: "Recommendations · cosine similarity", multi: false,
+        prompt: "How does the recommender use cosine similarity?",
+        choices: ["It ranks movie text vectors by how aligned they are with a query or selected movie vector.", "It predicts the exact box-office revenue.", "It measures the number of missing MongoDB fields.", "It selects the most recent release date only."],
+        answer: [0],
+        explanation: "Cosine similarity compares vector direction and is a common way to rank TF-IDF documents by textual similarity."
+      },
+      {
+        level: "Hard", concept: "Sparse matrices · memory", multi: false,
+        prompt: "Movie TF-IDF vectors are mostly zeros. Why is a sparse matrix a good representation?",
+        choices: ["It stores nonzero values efficiently instead of allocating memory for every zero.", "It removes the need to remember which row corresponds to which movie.", "It stores only the highest-scoring title.", "It changes cosine similarity into a supervised metric."],
+        answer: [0],
+        explanation: "Text vocabularies produce high-dimensional vectors with relatively few nonzero terms. Sparse storage saves memory while preserving values."
+      },
+      {
+        level: "Hard", concept: "Classification · model families", multi: true,
+        prompt: "Which descriptions of models implemented in the project are accurate? <em>Select all that apply.</em>",
+        choices: ["Logistic regression estimates a class probability through a linear decision model.", "A random forest combines predictions from many decision trees.", "A linear SVM can rank examples with decision scores even if it does not expose predict_proba by default.", "K-means is the project's supervised high-engagement classifier."],
+        answer: [0, 1, 2],
+        explanation: "These describe the three supervised model families used. K-means is an unsupervised clustering algorithm, not that classifier."
+      },
+      {
+        level: "Hard", concept: "Model selection · GridSearchCV", multi: false,
+        prompt: "What is the purpose of using GridSearchCV with stratified folds for logistic-regression settings?",
+        choices: ["Compare specified hyperparameter combinations over multiple class-preserving folds, then refit the selected configuration.", "Guarantee the chosen model wins on every future dataset.", "Use the test set repeatedly until the score improves.", "Search every possible parameter value in the model."],
+        answer: [0],
+        explanation: "Grid search evaluates a defined parameter grid with cross-validation; stratified folds maintain class proportions. It cannot guarantee future performance."
+      },
+      {
+        level: "Hard", concept: "Evaluation · metric choice", multi: false,
+        prompt: "If high engagement is relatively rare, why can accuracy alone be misleading?",
+        choices: ["A model that predicts the majority class for every movie may still have high accuracy while missing the minority class.", "Accuracy always equals ROC-AUC.", "Accuracy ignores all correct predictions.", "An imbalanced target cannot be evaluated."],
+        answer: [0],
+        explanation: "A majority-class baseline may appear accurate while having poor recall for the class of interest. Precision, recall, F1, ROC-AUC, and the confusion matrix add useful views."
+      },
+      {
+        level: "Medium", concept: "Clustering · K-means", multi: false,
+        prompt: "What is K-means doing in the project?",
+        choices: ["Assigning movies to one of k groups based on distances in a feature representation, without engagement labels.", "Predicting vote_count from labeled examples.", "Finding the cosine-similar movie for a plot query only.", "Replacing missing values with the median."],
+        answer: [0],
+        explanation: "K-means is unsupervised: it partitions feature vectors into k clusters by minimizing within-cluster distance to centroids."
+      },
+      {
+        level: "Hard", concept: "Clustering · silhouette score", multi: false,
+        prompt: "What does a higher silhouette score generally indicate for a candidate clustering?",
+        choices: ["Points are relatively close to their own cluster and separated from neighboring clusters.", "The classifier's ROC-AUC is higher.", "The number of clusters is always objectively correct.", "Every cluster contains the same number of movies."],
+        answer: [0],
+        explanation: "Silhouette compares within-cluster cohesion with nearest-cluster separation. A higher score is evidence of better separation, not proof that the clustering is useful."
+      },
+      {
+        level: "Hard", concept: "Dimensionality reduction · TruncatedSVD", multi: false,
+        prompt: "Why use TruncatedSVD to project a large sparse feature matrix for a 2-D cluster view?",
+        choices: ["It can reduce sparse high-dimensional vectors to a small coordinate space without requiring a dense centered matrix.", "It converts clusters into ground-truth labels.", "It guarantees that the 2-D view preserves every distance exactly.", "It increases the TF-IDF vocabulary size."],
+        answer: [0],
+        explanation: "TruncatedSVD works with sparse matrices and provides a low-dimensional projection. A visualization is an approximation, not a perfect preservation of all structure."
+      },
+      {
+        level: "Easy", concept: "Persistence · model artifacts", multi: false,
+        prompt: "Why save a fitted classifier or vectorizer with a serialization tool such as joblib?",
+        choices: ["So a later process can reload the learned artifact instead of rebuilding it from scratch.", "So it automatically updates when source data changes.", "So it encrypts the API key.", "So a saved model no longer needs compatible library versions."],
+        answer: [0],
+        explanation: "Serialization persists fitted state for reuse, but artifacts do not self-update and can depend on compatible library versions and feature schemas."
+      },
+      {
+        level: "Easy", concept: "Visualization · exploratory analysis", multi: false,
+        prompt: "In this project, what is the general role of plotting libraries such as Matplotlib and Seaborn?",
+        choices: ["Help explore distributions, relationships, and cluster/model behavior visually; they do not perform the underlying model training by themselves.", "Replace all input validation with pictures.", "Automatically choose the best classifier from a chart.", "Store movie documents in MongoDB."],
+        answer: [0],
+        explanation: "Visualization supports exploration and communication of patterns. The data transformations and models still produce the results being plotted."
+      }
+    ];
+
+    const questionsRoot = document.getElementById("questions");
+    const form = document.getElementById("quiz-form");
+    const progress = document.getElementById("progress");
+    const progressLabel = document.getElementById("progress-label");
+    const progressPercent = document.getElementById("progress-percent");
+    const status = document.getElementById("status");
+    const submitButton = document.getElementById("submit");
+    const quizState = document.getElementById("quiz-state");
+    let submitted = false;
+
+    function renderQuestions() {
+      questionsRoot.replaceChildren();
+      questions.forEach((question, qIndex) => {
+        const card = document.createElement("section");
+        card.className = "question";
+        card.id = `question-${qIndex}`;
+
+        const head = document.createElement("div");
+        head.className = "qhead";
+        const number = document.createElement("div");
+        number.className = "qnumber";
+        number.textContent = String(qIndex + 1).padStart(2, "0");
+        const main = document.createElement("div");
+        main.className = "qmain";
+        const prompt = document.createElement("div");
+        prompt.className = "question-text";
+        prompt.innerHTML = question.prompt;
+        const concept = document.createElement("div");
+        concept.className = "concept";
+        concept.textContent = question.concept;
+        main.append(prompt, concept);
+        head.append(number, main);
+        card.append(head);
+
+        const tags = document.createElement("div");
+        tags.className = "tags";
+        const level = document.createElement("span");
+        level.className = "tag";
+        level.textContent = question.level;
+        const type = document.createElement("span");
+        type.className = `tag${question.multi ? " multi" : ""}`;
+        type.textContent = question.multi ? "Select all that apply" : "Select one";
+        tags.append(level, type);
+        card.append(tags);
+
+        const choices = document.createElement("div");
+        question.choices.forEach((choice, choiceIndex) => {
+          const label = document.createElement("label");
+          label.className = "choice";
+          label.dataset.choice = String(choiceIndex);
+          const input = document.createElement("input");
+          input.type = question.multi ? "checkbox" : "radio";
+          input.name = `q${qIndex}`;
+          input.value = String(choiceIndex);
+          input.setAttribute("aria-label", choice);
+          input.addEventListener("change", updateProgress);
+          const text = document.createElement("span");
+          text.className = "choice-text";
+          text.textContent = choice;
+          label.append(input, text);
+          choices.append(label);
+        });
+        card.append(choices);
+
+        const feedback = document.createElement("div");
+        feedback.className = "feedback";
+        feedback.id = `feedback-${qIndex}`;
+        card.append(feedback);
+        questionsRoot.append(card);
+      });
+    }
+
+    function getSelected(questionIndex) {
+      return Array.from(
+        document.querySelectorAll(`input[name="q${questionIndex}"]:checked`)
+      ).map((input) => Number(input.value)).sort((a, b) => a - b);
+    }
+
+    function updateProgress() {
+      if (submitted) return;
+      const answered = questions.reduce(
+        (count, _, index) => count + (getSelected(index).length ? 1 : 0), 0
+      );
+      progress.value = answered;
+      progressLabel.textContent = `${answered} of ${questions.length} answered`;
+      progressPercent.textContent = `${Math.round(answered / questions.length * 100)}%`;
+    }
+
+    function sameAnswers(selected, correct) {
+      return selected.length === correct.length
+        && selected.every((value, index) => value === correct[index]);
+    }
+
+    function submitQuiz(event) {
+      event.preventDefault();
+      if (submitted) return;
+      const unanswered = questions
+        .map((_, index) => index)
+        .filter((index) => getSelected(index).length === 0);
+      if (unanswered.length) {
+        status.textContent = `${unanswered.length} question${unanswered.length === 1 ? "" : "s"} unanswered. Finish them or submit what you have.`;
+        if (!window.confirm(`${unanswered.length} question(s) are unanswered. Submit anyway?`)) {
+          document.getElementById(`question-${unanswered[0]}`).scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+
+      let score = 0;
+      questions.forEach((question, qIndex) => {
+        const selected = getSelected(qIndex);
+        const correct = sameAnswers(selected, question.answer);
+        if (correct) score += 1;
+        const card = document.getElementById(`question-${qIndex}`);
+        card.querySelectorAll(".choice").forEach((label) => {
+          const index = Number(label.dataset.choice);
+          if (question.answer.includes(index)) label.classList.add("correct");
+          else if (selected.includes(index)) label.classList.add("incorrect");
+          label.querySelector("input").disabled = true;
+        });
+        const feedback = document.getElementById(`feedback-${qIndex}`);
+        feedback.className = `feedback show ${correct ? "good" : "bad"}`;
+        const outcome = document.createElement("strong");
+        outcome.textContent = correct ? "Correct" : (selected.length ? "Not quite" : "Skipped");
+        const explanation = document.createElement("p");
+        explanation.textContent = question.explanation;
+        feedback.append(outcome, explanation);
+      });
+
+      submitted = true;
+      submitButton.disabled = true;
+      quizState.textContent = "SUBMITTED";
+      status.textContent = "Answer key and explanations are shown under each question.";
+      progress.value = questions.length;
+      progressLabel.textContent = `${questions.length} of ${questions.length} reviewed`;
+      progressPercent.textContent = "100%";
+
+      const percent = Math.round(score / questions.length * 100);
+      const title = percent >= 90 ? "CineMind expert" : percent >= 75 ? "Strong project fluency" : percent >= 55 ? "Good foundation" : "A useful learning map";
+      document.getElementById("score").textContent = `${score} / ${questions.length}`;
+      document.getElementById("result-title").textContent = title;
+      document.getElementById("result-copy").textContent =
+        percent >= 75
+          ? "You have a solid grasp of the ideas behind the project. Review any explanations you missed, then try the design challenge."
+          : "Use the explanations to identify concepts to revisit. The final challenge lets you connect the ideas into a complete system.";
+      document.getElementById("result-detail").textContent =
+        `${percent}% correct · ${questions.length - score} question${questions.length - score === 1 ? "" : "s"} to review.`;
+      document.getElementById("result").classList.add("show");
+      document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function resetQuiz() {
+      form.reset();
+      submitted = false;
+      renderQuestions();
+      updateProgress();
+      submitButton.disabled = false;
+      quizState.textContent = "NOT SUBMITTED";
+      status.textContent = "";
+      document.getElementById("result").classList.remove("show");
+      document.getElementById("scenario-answer").value = "";
+      document.getElementById("scenario-status").textContent = "";
+      document.getElementById("scenario-result").classList.remove("show");
+      document.getElementById("scenario-rubric").open = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    form.addEventListener("submit", submitQuiz);
+    document.getElementById("reset").addEventListener("click", resetQuiz);
+    document.getElementById("scenario-check").addEventListener("click", () => {
+      const response = document.getElementById("scenario-answer").value.trim();
+      const statusNode = document.getElementById("scenario-status");
+      const resultNode = document.getElementById("scenario-result");
+      if (response.length < 40) {
+        statusNode.textContent = "Write a little more detail before checking your coverage.";
+        resultNode.classList.remove("show");
+        return;
+      }
+      statusNode.textContent = "Scenario ready for self-review.";
+      resultNode.classList.add("show");
+      document.getElementById("scenario-rubric").open = true;
+    });
+
+    renderQuestions();
+    updateProgress();
+    if (questions.length !== 30) {
+      throw new Error(`Quiz configuration error: expected 30 questions, got ${questions.length}.`);
+    }
+  </script>
+</body>
+</html>
